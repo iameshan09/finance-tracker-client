@@ -14,5 +14,7 @@ namespace finance_tracker_client.Models
         [Required]
         [EnumDataType(typeof(TransactionType), ErrorMessage = "Type must be either 'Income' or 'Expense'.")]
         public TransactionType Type { get; set; }
+
+        public DateTime? Date { get; set; }
     }
 }

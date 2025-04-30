@@ -9,6 +9,7 @@ namespace finance_tracker_client.Models
         public double Amount { get; set; } = 0.0;
         public TransactionType Type { get; set; }
         public TransactionStatus Status { get; set; }
+        public DateTime Date { get; set; }
     }
 
     public enum TransactionType

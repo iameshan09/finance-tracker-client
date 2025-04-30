@@ -13,42 +13,46 @@
                 <MudCardContent>
                     <div style="height:64px">
                         <MudTextField 
-                            Label="Description"
-                            Mask="@letterMask"
-                            @bind-Value="transaction.Name"
-                            For="@(() => transaction.Name)"
-                            Required="true"
-                            Immediate="true"
-                            RequiredError="Required"
-                            Variant="Variant.Outlined"
-                            Margin="MudBlazor.Margin.Dense"
-                         />
+                        Label="Description"
+                        Mask="@letterMask"
+                        @bind-Value="transaction.Name"
+                        For="@(() => transaction.Name)"
+                        Required="true"
+                        Immediate="true"
+                        RequiredError="Required"
+                        Variant="Variant.Outlined"
+                        Margin="MudBlazor.Margin.Dense"
+                        />
                     </div>
                     <div style="height:64px">
                         <MudTextField Label="Amount"
-                            Class="mt-3"
-                            Mask="@digitMask"
-                            @bind-Value="transaction.Amount"
-                            For="@(() => transaction.Amount)"
-                            Required="true"
-                            Immediate="true"
-                            Variant="Variant.Outlined"
-                            Margin="MudBlazor.Margin.Dense"
+                        Class="mt-3"
+                        Mask="@digitMask"
+                        @bind-Value="transaction.Amount"
+                        For="@(() => transaction.Amount)"
+                        Required="true"
+                        Immediate="true"
+                        Variant="Variant.Outlined"
+                        Margin="MudBlazor.Margin.Dense"
                         />
                     </div>
                     <div style="height:64px">
                         <MudSelect T="TransactionType"
-                            Label="Type"
-                            @bind-Value="transaction.Type"
-                            For="@(() => transaction.Type)"
-                            Required="true"
-                            Variant="Variant.Outlined"
-                            Margin="MudBlazor.Margin.Dense"
+                        Label="Type"
+                        @bind-Value="transaction.Type"
+                        For="@(() => transaction.Type)"
+                        Required="true"
+                        Variant="Variant.Outlined"
+                        Margin="MudBlazor.Margin.Dense"
                         >
                             <MudSelectItem Value="TransactionType.Income">Income</MudSelectItem>
                             <MudSelectItem Value="TransactionType.Expense">Expense</MudSelectItem>
                         </MudSelect>
-                    </div> 
+                    </div>
+                    <div style="height:64px">
+                        <MudDatePicker Label="Entry date" @bind-Date="transaction.Date" For="@(() => transaction.Date)" Variant="Variant.Outlined"
+                        Margin="MudBlazor.Margin.Dense" MaxDate="DateTime.Today"/>
+                    </div>
                 </MudCardContent>
                 <MudCardActions>
                     <MudButton OnClick="_handleSubmit"
@@ -81,6 +85,7 @@
                 transaction.Amount = response.Amount.ToString("F2");
                 transaction.Name = response.Name;
                 transaction.Type = response.Type;
+                transaction.Date = response.Date;
             }
 
         }catch(Exception e)
@@ -102,12 +107,12 @@
                     id = Id,
                     name = transaction.Name,
                     amount = double.TryParse(transaction.Amount, out var amount) ? amount : 0.0,
-                    type = transaction.Type
+                    type = transaction.Type,
+                    date = transaction.Date
                 };
                 var response = await httpClient.PatchAsJsonAsync($"api/Transaction", body);
                 response.EnsureSuccessStatusCode();
                 Snackbar.Add("Transaction updated successfully!", Severity.Success);
-                resetForm();
             }
 
         }catch(Exception e)
@@ -117,9 +122,6 @@
         }
     }
 
-    private void resetForm()
-    {
-        transaction = new TransactionDto();
-    }
+   
 
 }

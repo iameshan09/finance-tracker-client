@@ -49,7 +49,11 @@
                             <MudSelectItem Value="TransactionType.Income">Income</MudSelectItem>
                             <MudSelectItem Value="TransactionType.Expense">Expense</MudSelectItem>
                         </MudSelect>
-                    </div> 
+                    </div>
+                    <div style="height:64px">
+                        <MudDatePicker Label="Entry date" @bind-Date="transaction.Date" For="@(() => transaction.Date)" Variant="Variant.Outlined"
+                            Margin="MudBlazor.Margin.Dense" MaxDate="DateTime.Today"/>
+                    </div>
                 </MudCardContent>
                 <MudCardActions>
                     <MudButton OnClick="_handleSubmit"
@@ -80,7 +84,8 @@
                 {
                     name = transaction.Name,
                     amount = double.TryParse(transaction.Amount, out var amount) ? amount : 0.0,
-                    type = transaction.Type
+                    type = transaction.Type,
+                    date = transaction.Date,
                 };
 
                 var response = await httpClient.PostAsJsonAsync($"api/Transaction", body);
