@@ -1,0 +1,74 @@
+﻿@page "/"
+@using finance_tracker_client.Models
+@using finance_tracker_client.Utils
+@rendermode InteractiveServer
+
+@inject HttpClient httpClient
+
+<PageTitle>Finance Tracker</PageTitle>
+
+<MudText Typo="Typo.h5">Savings and Finance Dashboard</MudText>
+<br/>
+@if (data == null)
+{
+    <p><em>Loading...</em></p>
+}else
+{
+    <MudGrid Spacing="2">
+        <MudItem xs="12" sm="6">
+            <MudCard Class="p-3"> 
+                <MudText Typo="Typo.body1">Savings</MudText>
+                <MudText Typo="Typo.body2">$@data.savings</MudText>
+                <div class="d-flex justify-center align-center">
+                    <div style="width:66%; height:66%">
+                        <CircularProgress Percentage="int.Parse(data.savingsPercent)" Label="Savings"/> 
+                    </div>
+                </div>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <div class="d-flex flex-column gap-2" style="height:100%">
+                <MudCard Class="p-3 flex-grow-1"> 
+                    <MudText Typo="Typo.body1">Income</MudText>
+                    <MudText Typo="Typo.body2">$@data.incomes</MudText>
+                </MudCard>
+                <MudCard Class="p-3 flex-grow-1" > 
+                    <MudText Typo="Typo.body1">Expenses</MudText>
+                    <MudText Typo="Typo.body2">$@data.expenses</MudText>
+                </MudCard>
+            </div>        
+        </MudItem>
+    </MudGrid>
+}
+
+
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    TransactionSummary? data;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var response = await httpClient.GetFromJsonAsync<TransactionSummary>($"api/Transaction/summary");
+            if (response != null)
+            {
+
+                data = new TransactionSummary
+                {
+                        incomes = HelperUtils.FormatCurrency(response.incomes),
+                        expenses = HelperUtils.FormatCurrency(response.expenses),
+                        savings = HelperUtils.FormatCurrency(response.savings),
+                        savingsPercent = response.savingsPercent
+                };
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+        }
+    }
+}

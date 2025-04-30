@@ -1,0 +1,39 @@
+﻿
+
+<div class="circular-progress" style="width:100%; height:100%">
+    <svg viewBox="0 0 36 36" class="circular-chart">
+        <path
+        class="circle-bg"
+        d="M18 2.0845
+               a 15.9155 15.9155 0 0 1 0 31.831
+               a 15.9155 15.9155 0 0 1 0 -31.831"
+        />
+        <path
+        class="circle"
+        style="stroke:@getStrokeColor()"
+        stroke-dasharray="@Math.Abs(Percentage), 100"
+        d="M18 2.0845
+               a 15.9155 15.9155 0 0 1 0 31.831
+               a 15.9155 15.9155 0 0 1 0 -31.831"
+        />
+        <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" class="percentage-text">@Percentage%</text>
+        <text x="50%" y="62%" text-anchor="middle" dominant-baseline="middle" class="value-name">@Label</text>
+    </svg>
+</div>
+
+@code {
+    [Parameter]
+    public int Percentage { get; set; }
+
+    [Parameter]
+    public string Label { get; set; } = "Value Name";
+
+    
+
+    private string getStrokeColor()
+    {
+        return Percentage > 0 ? "#594ae2" : "#D22B2B";
+    }
+
+   
+}

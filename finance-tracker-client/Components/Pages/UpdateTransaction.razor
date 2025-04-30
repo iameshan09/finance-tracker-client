@@ -1,0 +1,11 @@
+﻿@page "/transactions/{Id:int}"
+
+
+<MudText Typo="Typo.h5">Update Transaction @Id</MudText>
+<UpdateTransactionForm Id="@Id"/>
+
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+}

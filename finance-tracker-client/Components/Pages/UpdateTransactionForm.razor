@@ -1,0 +1,125 @@
+﻿@using finance_tracker_client.Models
+@using System.ComponentModel.DataAnnotations
+@rendermode InteractiveServer
+
+@inject HttpClient httpClient
+@inject ISnackbar Snackbar
+
+<br/>
+<MudForm @ref="form" Model="@transaction">
+    <MudGrid>
+        <MudItem xs="12" sm="7">
+            <MudCard>
+                <MudCardContent>
+                    <div style="height:64px">
+                        <MudTextField 
+                            Label="Description"
+                            Mask="@letterMask"
+                            @bind-Value="transaction.Name"
+                            For="@(() => transaction.Name)"
+                            Required="true"
+                            Immediate="true"
+                            RequiredError="Required"
+                            Variant="Variant.Outlined"
+                            Margin="MudBlazor.Margin.Dense"
+                         />
+                    </div>
+                    <div style="height:64px">
+                        <MudTextField Label="Amount"
+                            Class="mt-3"
+                            Mask="@digitMask"
+                            @bind-Value="transaction.Amount"
+                            For="@(() => transaction.Amount)"
+                            Required="true"
+                            Immediate="true"
+                            Variant="Variant.Outlined"
+                            Margin="MudBlazor.Margin.Dense"
+                        />
+                    </div>
+                    <div style="height:64px">
+                        <MudSelect T="TransactionType"
+                            Label="Type"
+                            @bind-Value="transaction.Type"
+                            For="@(() => transaction.Type)"
+                            Required="true"
+                            Variant="Variant.Outlined"
+                            Margin="MudBlazor.Margin.Dense"
+                        >
+                            <MudSelectItem Value="TransactionType.Income">Income</MudSelectItem>
+                            <MudSelectItem Value="TransactionType.Expense">Expense</MudSelectItem>
+                        </MudSelect>
+                    </div> 
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton OnClick="_handleSubmit"
+                    Variant="Variant.Filled"
+                    Color="MudBlazor.Color.Primary"
+                    Class="ml-auto">Save</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</MudForm>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private MudForm form;
+    private TransactionDto transaction = new();
+    public IMask letterMask = new RegexMask(@"^[a-zA-Z ]*$");
+    public IMask digitMask = new RegexMask(@"^[1-9][0-9]*$");
+
+    protected override async Task OnInitializedAsync()
+    {   try
+
+        {
+            var response = await httpClient.GetFromJsonAsync<Transaction>($"api/Transaction/single/{Id}");
+            if (response != null)
+            {
+
+                transaction.Amount = response.Amount.ToString("F2");
+                transaction.Name = response.Name;
+                transaction.Type = response.Type;
+            }
+
+        }catch(Exception e)
+        {
+            Snackbar.Add("Error: " + e.Message, Severity.Error);
+        }
+
+    }
+
+    private async Task _handleSubmit()
+    {
+        try
+        {
+            await form.Validate();
+            if (form.IsValid)
+            {
+                var body = new
+                {
+                    id = Id,
+                    name = transaction.Name,
+                    amount = double.TryParse(transaction.Amount, out var amount) ? amount : 0.0,
+                    type = transaction.Type
+                };
+                var response = await httpClient.PatchAsJsonAsync($"api/Transaction", body);
+                response.EnsureSuccessStatusCode();
+                Snackbar.Add("Transaction updated successfully!", Severity.Success);
+                resetForm();
+            }
+
+        }catch(Exception e)
+        {
+            Console.WriteLine(e.Message);
+            Snackbar.Add("Error: " + e.Message, Severity.Error);
+        }
+    }
+
+    private void resetForm()
+    {
+        transaction = new TransactionDto();
+    }
+
+}

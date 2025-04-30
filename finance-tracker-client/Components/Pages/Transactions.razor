@@ -1,0 +1,130 @@
+﻿@page "/transactions"
+@using finance_tracker_client.Models
+@using finance_tracker_client.Utils
+@rendermode InteractiveServer
+@attribute [StreamRendering]
+
+@inject HttpClient httpClient
+@inject ISnackbar Snackbar
+
+<PageTitle>Transactions</PageTitle>
+
+<MudText Typo="Typo.h5">Transactions</MudText>
+<br/>
+    <div class="d-flex justify-end">
+        <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Add" Color="MudBlazor.Color.Primary" Href="/transactions/new" Size="Size.Small" IconSize="Size.Small">Add</MudButton>
+    </div>
+    <br/>
+    <MudTable @ref="@_table" Items="@rows.Skip(page * rowsPerPage).Take(rowsPerPage)" Hover="true" Breakpoint="MudBlazor.Breakpoint.Sm" Loading="@_loading" LoadingProgressColor="MudBlazor.Color.Info">
+        <HeaderContent>
+            <MudTh>ID</MudTh>
+            <MudTh>Name</MudTh>
+            <MudTh>Amount</MudTh>
+            <MudTh>Type</MudTh>
+            <MudTh>View</MudTh>
+            <MudTh>Remove</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Nr">@context.Id</MudTd>
+            <MudTd DataLabel="Sign">@context.Name</MudTd>
+            <MudTd DataLabel="Name">@HelperUtils.FormatCurrency(context.Amount.ToString("F2"))</MudTd>
+            <MudTd DataLabel="Type">@context.Type</MudTd>
+            <MudTd DataLabel="View"><MudIconButton Href="@getLink(context.Id)" Icon="@Icons.Material.Outlined.RemoveRedEye"  Color="MudBlazor.Color.Primary" /></MudTd>
+            <MudTd DataLabel="Remove"><MudIconButton Icon="@Icons.Material.Outlined.Delete"  Color="MudBlazor.Color.Error" OnClick="@(() => OnDelete(context.Id))" /></MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <div class="d-flex justify-end">
+                <MudPagination SelectedChanged="_handlePageChange" Count="@getNumOfPages()" Class="pa-4"/>
+            </div>
+        </PagerContent>
+    </MudTable>
+
+@code {
+    private MudTable<Transaction> _table;
+    private List<Transaction> rows = [];
+    private int page = 0;
+    private int rowsPerPage = 10;
+    private int totalRecords;
+    private bool _loading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await FetchTransactionsAsync(0, true);
+    }
+
+    private async Task FetchTransactionsAsync(int currentPage, Boolean reset)
+    {
+        try
+        {
+            _loading = true;
+            var skip = currentPage * rowsPerPage;
+            var limit = rowsPerPage;
+
+
+            var response = await httpClient.GetFromJsonAsync<PaginatedTransactions>($"api/Transaction?skip={skip}&limit={limit}");
+
+            if (response != null)
+            {
+                totalRecords = response.TotalCount;
+                rows = reset ? response.Transactions : rows.Concat(response.Transactions).ToList();
+                if(reset)
+                {
+                    page = currentPage;
+                }
+
+            }
+        }catch(Exception e){
+            Console.WriteLine(e.Message);
+        }finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task _handlePageChange(int i)
+    {
+        var newPage = i - 1;
+        page = newPage;
+        _table.NavigateTo(newPage);
+        if (!PaginationUtils.HasDataForPage(newPage, rowsPerPage, totalRecords, rows))
+        {
+            await FetchTransactionsAsync(newPage, false);
+        }
+    }
+
+
+    private class PaginatedTransactions
+    {
+        public int TotalCount { get; set; }
+        public List<Transaction> Transactions { get; set; } = [];
+    }
+
+    private async Task OnDelete(int id)
+    {
+        try
+        {
+            var body = new
+            {
+                Id = id
+            };
+            var response = await httpClient.PatchAsJsonAsync($"api/Transaction/deativate", body);
+            response.EnsureSuccessStatusCode();
+            await FetchTransactionsAsync(0,true);
+            Snackbar.Add("Record deleted successfully", Severity.Success);
+        }catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+            Snackbar.Add("Failed to delete the record", Severity.Error);
+        }
+    }
+
+    private string getLink(int id)
+    {
+        return "/transactions/" + id.ToString();
+    }
+
+    private int getNumOfPages()
+    {
+        return (int)Math.Ceiling((double)totalRecords / rowsPerPage);
+    }
+}
